@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PC Remote</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --card: #1a1a26;
+    --border: #2a2a3d;
+    --accent: #7c6aff;
+    --accent2: #ff6a7c;
+    --accent3: #6affd4;
+    --text: #e8e8f0;
+    --muted: #888899;
+    --danger: #ff4466;
+    --success: #44ffaa;
+    --warn: #ffaa44;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── LOGIN SCREEN ── */
+  #login-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 2rem;
+    background: radial-gradient(ellipse at 50% 0%, #1a1040 0%, var(--bg) 60%);
+  }
+
+  .logo {
+    font-size: 3rem;
+    margin-bottom: 0.5rem;
+    filter: drop-shadow(0 0 20px var(--accent));
+  }
+
+  .login-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.8rem;
+    letter-spacing: -1px;
+    margin-bottom: 0.25rem;
+    background: linear-gradient(135deg, var(--accent), var(--accent3));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .login-sub {
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin-bottom: 2.5rem;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .login-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 2rem;
+    width: 100%;
+    max-width: 360px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+
+  .field-label {
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .field-input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.85rem 1rem;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.2s;
+    margin-bottom: 1rem;
+  }
+  .field-input:focus { border-color: var(--accent); }
+  .field-input::placeholder { color: var(--muted); }
+
+  .code-input {
+    font-size: 2rem;
+    letter-spacing: 0.5rem;
+    text-align: center;
+    text-transform: uppercase;
+  }
+
+  .btn-primary {
+    width: 100%;
+    padding: 1rem;
+    background: linear-gradient(135deg, var(--accent), #5a4aff);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    letter-spacing: 0.5px;
+  }
+  .btn-primary:active { transform: scale(0.97); }
+  .btn-primary:hover { box-shadow: 0 0 20px rgba(124,106,255,0.4); }
+
+  .error-msg {
+    color: var(--danger);
+    font-size: 0.8rem;
+    text-align: center;
+    margin-top: 0.75rem;
+    font-family: 'JetBrains Mono', monospace;
+    display: none;
+  }
+
+  /* ── MAIN APP ── */
+  #app-screen { display: none; flex-direction: column; min-height: 100vh; }
+
+  /* Top Bar */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.2rem;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(10px);
+  }
+
+  .topbar-left { display: flex; align-items: center; gap: 0.6rem; }
+  .topbar-icon { font-size: 1.3rem; }
+  .topbar-title { font-weight: 800; font-size: 1.1rem; }
+  .topbar-host {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--accent3);
+    background: rgba(106,255,212,0.1);
+    padding: 0.2rem 0.5rem;
+    border-radius: 20px;
+  }
+
+  .btn-icon {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.5rem 0.7rem;
+    color: var(--text);
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.2s;
+  }
+  .btn-icon:active { background: var(--accent); }
+
+  /* Nav Tabs */
+  .nav-tabs {
+    display: flex;
+    overflow-x: auto;
+    gap: 0.4rem;
+    padding: 0.75rem 1rem;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    scrollbar-width: none;
+  }
+  .nav-tabs::-webkit-scrollbar { display: none; }
+
+  .tab-btn {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.5rem 0.9rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 30px;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .tab-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+    box-shadow: 0 0 15px rgba(124,106,255,0.3);
+  }
+
+  /* Content area */
+  .content { padding: 1rem; flex: 1; }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* Cards */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.2rem;
+    margin-bottom: 1rem;
+  }
+
+  .card-title {
+    font-size: 0.65rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 1rem;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Info grid */
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+  .info-item {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 0.8rem;
+    border: 1px solid var(--border);
+  }
+  .info-item-label { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; font-family: 'JetBrains Mono', monospace; }
+  .info-item-value { font-size: 1.1rem; font-weight: 700; margin-top: 0.2rem; }
+
+  /* Progress bar */
+  .progress-bar {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-top: 0.4rem;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.5s ease;
+  }
+  .progress-fill.green { background: var(--success); }
+  .progress-fill.yellow { background: var(--warn); }
+  .progress-fill.red { background: var(--danger); }
+
+  /* Action buttons grid */
+  .action-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+  .action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1.2rem 0.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-align: center;
+  }
+  .action-btn:active { transform: scale(0.95); border-color: var(--accent); background: rgba(124,106,255,0.1); }
+  .action-btn .icon { font-size: 1.8rem; }
+  .action-btn.danger { border-color: rgba(255,68,102,0.3); }
+  .action-btn.danger:active { border-color: var(--danger); background: rgba(255,68,102,0.1); }
+
+  /* Input row */
+  .input-row {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+  .input-row .field-input { margin-bottom: 0; flex: 1; }
+
+  .btn-send {
+    background: var(--accent);
+    border: none;
+    border-radius: 10px;
+    padding: 0 1rem;
+    color: white;
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: background 0.2s, transform 0.15s;
+  }
+  .btn-send:active { transform: scale(0.93); background: #5a4aff; }
+
+  /* App list */
+  .app-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem;
+    background: var(--surface);
+    border-radius: 10px;
+    margin-bottom: 0.5rem;
+    border: 1px solid var(--border);
+  }
+  .app-item-info { flex: 1; min-width: 0; }
+  .app-item-name { font-weight: 700; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .app-item-meta { font-size: 0.7rem; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+  .btn-kill {
+    background: rgba(255,68,102,0.15);
+    border: 1px solid rgba(255,68,102,0.3);
+    border-radius: 8px;
+    padding: 0.4rem 0.7rem;
+    color: var(--danger);
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-weight: 700;
+    white-space: nowrap;
+    margin-left: 0.5rem;
+    font-family: 'Syne', sans-serif;
+  }
+
+  /* File browser */
+  .file-path-bar {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--accent3);
+    padding: 0.5rem 0.75rem;
+    background: var(--surface);
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+    word-break: break-all;
+  }
+
+  .file-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.7rem;
+    background: var(--surface);
+    border-radius: 10px;
+    margin-bottom: 0.4rem;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .file-item:active { border-color: var(--accent); }
+  .file-icon { font-size: 1.3rem; flex-shrink: 0; }
+  .file-name { font-weight: 700; font-size: 0.85rem; word-break: break-all; }
+  .file-meta { font-size: 0.65rem; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+  .btn-del {
+    background: rgba(255,68,102,0.1);
+    border: 1px solid rgba(255,68,102,0.2);
+    border-radius: 6px;
+    padding: 0.3rem 0.5rem;
+    color: var(--danger);
+    cursor: pointer;
+    font-size: 0.7rem;
+    margin-left: auto;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* Terminal */
+  .terminal {
+    background: #050508;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--accent3);
+    min-height: 200px;
+    max-height: 350px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+    margin-bottom: 0.75rem;
+  }
+
+  /* Result toast */
+  #result-toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0.85rem 1.4rem;
+    font-size: 0.85rem;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text);
+    z-index: 999;
+    transition: transform 0.3s ease;
+    max-width: 320px;
+    text-align: center;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+  }
+  #result-toast.show { transform: translateX(-50%) translateY(0); }
+  #result-toast.ok { border-color: var(--success); color: var(--success); }
+  #result-toast.err { border-color: var(--danger); color: var(--danger); }
+
+  /* Spinner */
+  .spinner {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 0.4rem;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Confirm overlay */
+  #confirm-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+  }
+  #confirm-overlay.show { display: flex; }
+  .confirm-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 2rem;
+    width: 100%;
+    max-width: 320px;
+    text-align: center;
+  }
+  .confirm-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+  .confirm-title { font-weight: 800; font-size: 1.2rem; margin-bottom: 0.5rem; }
+  .confirm-msg { color: var(--muted); font-size: 0.85rem; margin-bottom: 1.5rem; }
+  .confirm-btns { display: flex; gap: 0.75rem; }
+  .btn-cancel {
+    flex: 1; padding: 0.85rem;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text);
+    cursor: pointer; font-family: 'Syne', sans-serif; font-weight: 700;
+  }
+  .btn-confirm-ok {
+    flex: 1; padding: 0.85rem;
+    background: var(--danger); border: none;
+    border-radius: 10px; color: white;
+    cursor: pointer; font-family: 'Syne', sans-serif; font-weight: 700;
+  }
+
+  /* Textarea */
+  textarea.field-input {
+    resize: vertical;
+    min-height: 100px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+  }
+
+  /* Badge */
+  .badge {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 0.15rem 0.45rem;
+    border-radius: 20px;
+    font-weight: 700;
+  }
+  .badge-purple { background: rgba(124,106,255,0.2); color: var(--accent); }
+  .badge-green { background: rgba(68,255,170,0.15); color: var(--success); }
+
+  .section-title {
+    font-weight: 800;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .separator { height: 1px; background: var(--border); margin: 1rem 0; }
+
+  .loading-text { color: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; text-align: center; padding: 2rem; }
+</style>
+</head>
+<body>
+
+<!-- ╔══════ LOGIN ══════╗ -->
+<div id="login-screen">
+  <div class="logo">🖥️</div>
+  <div class="login-title">PC Remote</div>
+  <div class="login-sub">Controllo remoto sicuro</div>
+
+  <div class="login-card">
+    <div class="field-label">IP Server (PC)</div>
+    <input class="field-input" id="server-ip" type="text" placeholder="192.168.1.x" inputmode="url">
+
+    <div class="field-label">Codice di Sessione</div>
+    <input class="field-input code-input" id="session-code" type="text" placeholder="XXXXXX" maxlength="6" autocomplete="off" autocapitalize="characters">
+
+    <button class="btn-primary" onclick="doLogin()">🔑 Connetti</button>
+    <div class="error-msg" id="login-error">Codice non valido o server irraggiungibile</div>
+  </div>
+</div>
+
+<!-- ╔══════ APP ══════╗ -->
+<div id="app-screen">
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="topbar-icon">🖥️</span>
+      <span class="topbar-title">PC Remote</span>
+      <span class="topbar-host" id="host-badge">—</span>
+    </div>
+    <button class="btn-icon" onclick="doLogout()">🔒</button>
+  </div>
+
+  <div class="nav-tabs" id="nav-tabs">
+    <button class="tab-btn active" onclick="switchTab('dashboard')" data-tab="dashboard">📊 Dashboard</button>
+    <button class="tab-btn" onclick="switchTab('apps')" data-tab="apps">⚙️ Processi</button>
+    <button class="tab-btn" onclick="switchTab('files')" data-tab="files">📁 File</button>
+    <button class="tab-btn" onclick="switchTab('web')" data-tab="web">🌐 Web</button>
+    <button class="tab-btn" onclick="switchTab('write')" data-tab="write">✏️ Testo</button>
+    <button class="tab-btn" onclick="switchTab('terminal')" data-tab="terminal">💻 Shell</button>
+    <button class="tab-btn" onclick="switchTab('power')" data-tab="power">⚡ Sistema</button>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="panel active" id="panel-dashboard">
+      <div class="card">
+        <div class="card-title">Informazioni PC</div>
+        <div class="info-grid" id="pc-info-grid">
+          <div class="loading-text" style="grid-column:1/-1">
+            <span class="spinner"></span> Caricamento...
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Azioni Rapide</div>
+        <div class="action-grid">
+          <div class="action-btn" onclick="switchTab('apps')">
+            <span class="icon">⚙️</span>Processi
+          </div>
+          <div class="action-btn" onclick="switchTab('files')">
+            <span class="icon">📁</span>File
+          </div>
+          <div class="action-btn" onclick="switchTab('web')">
+            <span class="icon">🌐</span>Web
+          </div>
+          <div class="action-btn" onclick="switchTab('terminal')">
+            <span class="icon">💻</span>Shell
+          </div>
+          <div class="action-btn" onclick="apiPost('/settings',{}).then(r=>toast(r.result,'ok'))">
+            <span class="icon">🔧</span>Impostazioni
+          </div>
+          <div class="action-btn" onclick="loadDashboard()">
+            <span class="icon">🔄</span>Aggiorna
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROCESSI -->
+    <div class="panel" id="panel-apps">
+      <div class="card">
+        <div class="card-title">Apri Applicazione</div>
+        <div class="input-row">
+          <input class="field-input" id="open-app-input" placeholder="es: notepad, chrome, firefox..." type="text">
+          <button class="btn-send" onclick="doOpenApp()">▶</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Processi in Esecuzione</div>
+        <div class="input-row">
+          <input class="field-input" id="app-search" placeholder="Filtra processi..." oninput="filterApps()" type="text">
+        </div>
+        <div id="app-list"><div class="loading-text"><span class="spinner"></span> Caricamento...</div></div>
+      </div>
+    </div>
+
+    <!-- FILE -->
+    <div class="panel" id="panel-files">
+      <div class="card">
+        <div class="card-title">Crea File</div>
+        <div class="input-row">
+          <input class="field-input" id="new-file-path" placeholder="/percorso/file.txt" type="text">
+          <button class="btn-send" onclick="doCreateFile()">+</button>
+        </div>
+        <textarea class="field-input" id="new-file-content" placeholder="Contenuto del file (opzionale)..."></textarea>
+      </div>
+      <div class="card">
+        <div class="card-title">Cerca File</div>
+        <div class="input-row">
+          <input class="field-input" id="file-search-q" placeholder="Nome file..." type="text">
+          <button class="btn-send" onclick="doSearchFiles()">🔍</button>
+        </div>
+        <div id="file-search-results"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Sfoglia File</div>
+        <div class="file-path-bar" id="current-path">~</div>
+        <div class="input-row">
+          <input class="field-input" id="path-input" placeholder="Percorso personalizzato..." type="text">
+          <button class="btn-send" onclick="browseCustomPath()">→</button>
+        </div>
+        <div id="file-list"><div class="loading-text"><span class="spinner"></span></div></div>
+      </div>
+    </div>
+
+    <!-- WEB -->
+    <div class="panel" id="panel-web">
+      <div class="card">
+        <div class="card-title">Cerca sul Web</div>
+        <div class="input-row">
+          <input class="field-input" id="search-query" placeholder="Cerca su Google..." type="text">
+          <button class="btn-send" onclick="doWebSearch()">🔍</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Apri Sito Web</div>
+        <div class="input-row">
+          <input class="field-input" id="open-url" placeholder="https://..." type="url">
+          <button class="btn-send" onclick="doOpenUrl()">▶</button>
+        </div>
+        <div class="separator"></div>
+        <div class="card-title">Siti Rapidi</div>
+        <div class="action-grid">
+          <div class="action-btn" onclick="quickOpen('https://youtube.com')"><span class="icon">▶️</span>YouTube</div>
+          <div class="action-btn" onclick="quickOpen('https://google.com')"><span class="icon">🔍</span>Google</div>
+          <div class="action-btn" onclick="quickOpen('https://github.com')"><span class="icon">🐙</span>GitHub</div>
+          <div class="action-btn" onclick="quickOpen('https://gmail.com')"><span class="icon">📧</span>Gmail</div>
+          <div class="action-btn" onclick="quickOpen('https://netflix.com')"><span class="icon">🎬</span>Netflix</div>
+          <div class="action-btn" onclick="quickOpen('https://spotify.com')"><span class="icon">🎵</span>Spotify</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TESTO -->
+    <div class="panel" id="panel-write">
+      <div class="card">
+        <div class="card-title">Scrivi Testo sul PC</div>
+        <textarea class="field-input" id="write-text" placeholder="Scrivi qui... il testo verrà aperto in un editor sul PC" style="min-height:200px"></textarea>
+        <button class="btn-primary" onclick="doWriteText()" style="margin-top:0.75rem">📝 Apri nel PC</button>
+      </div>
+    </div>
+
+    <!-- SHELL -->
+    <div class="panel" id="panel-terminal">
+      <div class="card">
+        <div class="card-title">Shell Remota</div>
+        <div class="terminal" id="terminal-output">Pronto. Scrivi un comando...\n</div>
+        <div class="input-row">
+          <input class="field-input" id="shell-cmd" placeholder="es: ls, dir, ping google.com..." type="text" style="font-family:'JetBrains Mono',monospace;font-size:0.85rem">
+          <button class="btn-send" onclick="doShell()">▶</button>
+        </div>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.5rem">
+          <button class="btn-icon" onclick="quickCmd('ls -la')">ls</button>
+          <button class="btn-icon" onclick="quickCmd('dir')">dir</button>
+          <button class="btn-icon" onclick="quickCmd('pwd')">pwd</button>
+          <button class="btn-icon" onclick="quickCmd('whoami')">whoami</button>
+          <button class="btn-icon" onclick="quickCmd('df -h')">disk</button>
+          <button class="btn-icon" onclick="quickCmd('top -bn1 | head -20')">top</button>
+          <button class="btn-icon" onclick="clearTerminal()">🗑️</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SISTEMA/POWER -->
+    <div class="panel" id="panel-power">
+      <div class="card">
+        <div class="card-title">Gestione Sistema</div>
+        <div class="action-grid">
+          <div class="action-btn" onclick="apiPost('/settings',{}).then(r=>toast(r.result,'ok'))">
+            <span class="icon">🔧</span>Impostazioni
+          </div>
+          <div class="action-btn danger" onclick="confirmAction('🔴 Spegnimento','Il PC verrà spento tra 1 minuto.','shutdown')">
+            <span class="icon">🔴</span>Spegni PC
+          </div>
+          <div class="action-btn danger" onclick="confirmAction('🔁 Riavvio','Il PC verrà riavviato tra 1 minuto.','restart')">
+            <span class="icon">🔁</span>Riavvia
+          </div>
+          <div class="action-btn" onclick="apiPost('/shell',{cmd:'shutdown /a'}).then(r=>toast('Annullato','ok')).catch(()=>apiPost('/shell',{cmd:'shutdown -c'}).then(r=>toast('Annullato','ok')))">
+            <span class="icon">✋</span>Annulla Spegni
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Sessione</div>
+        <div class="field-label" style="margin-bottom:0.5rem">Codice attivo</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:1.5rem;letter-spacing:0.4rem;color:var(--accent);margin-bottom:1rem" id="current-code-display">——</div>
+        <button class="btn-primary" onclick="genNewCode()">🔄 Genera Nuovo Codice</button>
+        <p style="font-size:0.75rem;color:var(--muted);margin-top:0.75rem;font-family:'JetBrains Mono',monospace">Condividi il codice con altri dispositivi per accedere a questo PC</p>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /app-screen -->
+
+<!-- Toast -->
+<div id="result-toast"></div>
+
+<!-- Confirm overlay -->
+<div id="confirm-overlay">
+  <div class="confirm-box">
+    <div class="confirm-icon" id="confirm-icon">⚠️</div>
+    <div class="confirm-title" id="confirm-title">Conferma</div>
+    <div class="confirm-msg" id="confirm-msg">Sei sicuro?</div>
+    <div class="confirm-btns">
+      <button class="btn-cancel" onclick="closeConfirm()">Annulla</button>
+      <button class="btn-confirm-ok" id="confirm-ok-btn" onclick="executeConfirmed()">Conferma</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────────────────────────
+let SERVER = '';
+let CODE = '';
+let ALL_APPS = [];
+let CURRENT_PATH = '';
+let CONFIRM_ACTION = null;
+
+// ── HELPERS ────────────────────────────────────────────────────────────────
+function api(path) {
+  return fetch(SERVER + path, {
+    headers: { 'X-Session-Code': CODE }
+  }).then(r => r.json());
+}
+
+function apiPost(path, body) {
+  return fetch(SERVER + path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Session-Code': CODE },
+    body: JSON.stringify(body)
+  }).then(r => r.json());
+}
+
+function toast(msg, type='') {
+  const t = document.getElementById('result-toast');
+  t.textContent = msg;
+  t.className = type ? `show ${type}` : 'show';
+  setTimeout(() => t.className = '', 3000);
+}
+
+// ── LOGIN ──────────────────────────────────────────────────────────────────
+function doLogin() {
+  const ip = document.getElementById('server-ip').value.trim();
+  const code = document.getElementById('session-code').value.trim().toUpperCase();
+  if (!ip || !code) { showError('Inserisci IP e codice'); return; }
+
+  const protocol = 'http://';
+  const port = ip.includes(':') ? '' : ':8765';
+  SERVER = protocol + ip + port;
+  CODE = code;
+
+  fetch(SERVER + '/validate_code', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.valid) {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app-screen').style.display = 'flex';
+      document.getElementById('host-badge').textContent = data.host || ip;
+      document.getElementById('current-code-display').textContent = code;
+      localStorage.setItem('pc_remote_ip', ip);
+      localStorage.setItem('pc_remote_code', code);
+      loadDashboard();
+      loadApps();
+      loadFiles();
+    } else {
+      showError('Codice non valido');
+    }
+  })
+  .catch(() => showError('Server non raggiungibile — controlla IP e che il server sia avviato'));
+}
+
+function showError(msg) {
+  const e = document.getElementById('login-error');
+  e.textContent = msg;
+  e.style.display = 'block';
+}
+
+function doLogout() {
+  SERVER = ''; CODE = '';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app-screen').style.display = 'none';
+  document.getElementById('login-error').style.display = 'none';
+}
+
+// Auto-fill from localStorage
+window.addEventListener('load', () => {
+  const ip = localStorage.getItem('pc_remote_ip');
+  const code = localStorage.getItem('pc_remote_code');
+  if (ip) document.getElementById('server-ip').value = ip;
+  if (code) document.getElementById('session-code').value = code;
+
+  // Enter key on code input
+  document.getElementById('session-code').addEventListener('keyup', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+  document.getElementById('shell-cmd').addEventListener('keyup', e => {
+    if (e.key === 'Enter') doShell();
+  });
+  document.getElementById('search-query').addEventListener('keyup', e => {
+    if (e.key === 'Enter') doWebSearch();
+  });
+  document.getElementById('open-app-input').addEventListener('keyup', e => {
+    if (e.key === 'Enter') doOpenApp();
+  });
+});
+
+// ── TABS ───────────────────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  document.querySelector(`[data-tab="${name}"]`).classList.add('active');
+}
+
+// ── DASHBOARD ──────────────────────────────────────────────────────────────
+function loadDashboard() {
+  api('/info').then(data => {
+    if (data.error) { return; }
+    const grid = document.getElementById('pc-info-grid');
+    const cpuColor = data.cpu_percent > 80 ? 'red' : data.cpu_percent > 50 ? 'yellow' : 'green';
+    const ramColor = data.ram_percent > 80 ? 'red' : data.ram_percent > 50 ? 'yellow' : 'green';
+    const diskColor = data.disk_percent > 80 ? 'red' : data.disk_percent > 50 ? 'yellow' : 'green';
+    grid.innerHTML = `
+      <div class="info-item" style="grid-column:1/-1">
+        <div class="info-item-label">Sistema</div>
+        <div class="info-item-value" style="font-size:0.9rem">${data.os}</div>
+        <div style="font-size:0.75rem;color:var(--muted);margin-top:0.2rem;font-family:'JetBrains Mono',monospace">${data.hostname}</div>
+      </div>
+      <div class="info-item">
+        <div class="info-item-label">CPU</div>
+        <div class="info-item-value">${data.cpu_percent}%</div>
+        <div class="progress-bar"><div class="progress-fill ${cpuColor}" style="width:${data.cpu_percent}%"></div></div>
+      </div>
+      <div class="info-item">
+        <div class="info-item-label">RAM</div>
+        <div class="info-item-value">${data.ram_percent}%</div>
+        <div class="progress-bar"><div class="progress-fill ${ramColor}" style="width:${data.ram_percent}%"></div></div>
+        <div style="font-size:0.65rem;color:var(--muted);margin-top:0.3rem">${data.ram_used_gb}/${data.ram_total_gb} GB</div>
+      </div>
+      <div class="info-item">
+        <div class="info-item-label">Disco</div>
+        <div class="info-item-value">${data.disk_percent}%</div>
+        <div class="progress-bar"><div class="progress-fill ${diskColor}" style="width:${data.disk_percent}%"></div></div>
+        <div style="font-size:0.65rem;color:var(--muted);margin-top:0.3rem">${data.disk_used_gb}/${data.disk_total_gb} GB</div>
+      </div>
+      <div class="info-item">
+        <div class="info-item-label">Boot</div>
+        <div class="info-item-value" style="font-size:0.8rem">${data.boot_time}</div>
+      </div>
+    `;
+  });
+}
+
+// ── APPS ───────────────────────────────────────────────────────────────────
+function loadApps() {
+  api('/apps').then(apps => {
+    ALL_APPS = apps;
+    renderApps(apps);
+  });
+}
+
+function renderApps(apps) {
+  const list = document.getElementById('app-list');
+  if (!apps.length) { list.innerHTML = '<div class="loading-text">Nessun processo</div>'; return; }
+  list.innerHTML = apps.map(a => `
+    <div class="app-item">
+      <div class="app-item-info">
+        <div class="app-item-name">${a.name}</div>
+        <div class="app-item-meta">PID ${a.pid} · ${a.mem_mb} MB · CPU ${a.cpu}%</div>
+      </div>
+      <button class="btn-kill" onclick="doKillApp(${a.pid}, '${a.name.replace(/'/g,"\\'")}')">✕ Kill</button>
+    </div>
+  `).join('');
+}
+
+function filterApps() {
+  const q = document.getElementById('app-search').value.toLowerCase();
+  renderApps(ALL_APPS.filter(a => a.name.toLowerCase().includes(q)));
+}
+
+function doOpenApp() {
+  const app = document.getElementById('open-app-input').value.trim();
+  if (!app) return;
+  apiPost('/open_app', { app }).then(r => toast(r.result, 'ok')).catch(() => toast('Errore', 'err'));
+}
+
+function doKillApp(pid, name) {
+  if (!confirm(`Terminare "${name}"?`)) return;
+  apiPost('/kill_app', { target: String(pid) }).then(r => {
+    toast(r.result, 'ok');
+    loadApps();
+  });
+}
+
+// ── FILES ──────────────────────────────────────────────────────────────────
+function loadFiles(path) {
+  const url = path ? `/files?path=${encodeURIComponent(path)}` : '/files';
+  api(url).then(data => {
+    if (data.error) { toast(data.error, 'err'); return; }
+    CURRENT_PATH = data.path;
+    document.getElementById('current-path').textContent = data.path;
+    const list = document.getElementById('file-list');
+    let html = '';
+    if (data.path !== '/') {
+      const parent = data.path.split('/').slice(0,-1).join('/') || '/';
+      html += `<div class="file-item" onclick="loadFiles('${parent}')"><span class="file-icon">⬆️</span><div><div class="file-name">..</div><div class="file-meta">Cartella padre</div></div></div>`;
+    }
+    html += data.items.map(f => `
+      <div class="file-item" onclick="${f.is_dir ? `loadFiles('${f.path.replace(/'/g,"\\'")}')` : ''}">
+        <span class="file-icon">${f.is_dir ? '📁' : getFileIcon(f.name)}</span>
+        <div style="flex:1;min-width:0">
+          <div class="file-name">${f.name}</div>
+          <div class="file-meta">${f.is_dir ? 'Cartella' : f.size_kb + ' KB'} · ${f.modified}</div>
+        </div>
+        <button class="btn-del" onclick="event.stopPropagation();doDeleteFile('${f.path.replace(/'/g,"\\'")}','${f.name.replace(/'/g,"\\'")}')">🗑️</button>
+      </div>
+    `).join('');
+    list.innerHTML = html || '<div class="loading-text">Cartella vuota</div>';
+  });
+}
+
+function getFileIcon(name) {
+  const ext = name.split('.').pop().toLowerCase();
+  const icons = { txt:'📄', pdf:'📕', doc:'📘', docx:'📘', xls:'📗', xlsx:'📗',
+    py:'🐍', js:'🟨', html:'🌐', css:'🎨', json:'📋', mp3:'🎵', mp4:'🎬',
+    jpg:'🖼️', jpeg:'🖼️', png:'🖼️', zip:'🗜️', exe:'⚙️', sh:'📜' };
+  return icons[ext] || '📄';
+}
+
+function doCreateFile() {
+  const path = document.getElementById('new-file-path').value.trim();
+  const content = document.getElementById('new-file-content').value;
+  if (!path) return;
+  apiPost('/create_file', { path, content }).then(r => {
+    toast(r.result, 'ok');
+    document.getElementById('new-file-path').value = '';
+    document.getElementById('new-file-content').value = '';
+    loadFiles(CURRENT_PATH);
+  });
+}
+
+function doDeleteFile(path, name) {
+  if (!confirm(`Eliminare "${name}"?`)) return;
+  apiPost('/delete_file', { path }).then(r => {
+    toast(r.result, 'ok');
+    loadFiles(CURRENT_PATH);
+  });
+}
+
+function doSearchFiles() {
+  const q = document.getElementById('file-search-q').value.trim();
+  if (!q) return;
+  document.getElementById('file-search-results').innerHTML = '<div class="loading-text"><span class="spinner"></span> Ricerca...</div>';
+  api(`/search_files?q=${encodeURIComponent(q)}`).then(data => {
+    if (!data.results.length) {
+      document.getElementById('file-search-results').innerHTML = '<div class="loading-text">Nessun risultato</div>';
+      return;
+    }
+    document.getElementById('file-search-results').innerHTML = data.results.map(p => `
+      <div class="file-item">
+        <span class="file-icon">${getFileIcon(p)}</span>
+        <div style="flex:1;min-width:0"><div class="file-name" style="font-size:0.75rem;word-break:break-all">${p}</div></div>
+        <button class="btn-del" onclick="doDeleteFile('${p.replace(/'/g,"\\'")}','${p.split('/').pop().replace(/'/g,"\\'")}')">🗑️</button>
+      </div>
+    `).join('');
+  });
+}
+
+function browseCustomPath() {
+  const p = document.getElementById('path-input').value.trim();
+  if (p) loadFiles(p);
+}
+
+// ── WEB ────────────────────────────────────────────────────────────────────
+function doWebSearch() {
+  const q = document.getElementById('search-query').value.trim();
+  if (!q) return;
+  apiPost('/search_web', { query: q }).then(r => toast(r.result, 'ok'));
+}
+
+function doOpenUrl() {
+  const url = document.getElementById('open-url').value.trim();
+  if (!url) return;
+  apiPost('/open_url', { url }).then(r => toast(r.result, 'ok'));
+}
+
+function quickOpen(url) {
+  apiPost('/open_url', { url }).then(r => toast(r.result, 'ok'));
+}
+
+// ── WRITE ──────────────────────────────────────────────────────────────────
+function doWriteText() {
+  const text = document.getElementById('write-text').value;
+  if (!text.trim()) return;
+  apiPost('/write_text', { text }).then(r => toast(r.result, 'ok'));
+}
+
+// ── SHELL ──────────────────────────────────────────────────────────────────
+function doShell() {
+  const cmd = document.getElementById('shell-cmd').value.trim();
+  if (!cmd) return;
+  const term = document.getElementById('terminal-output');
+  term.textContent += `\n$ ${cmd}\n`;
+  document.getElementById('shell-cmd').value = '';
+  apiPost('/shell', { cmd }).then(r => {
+    term.textContent += (r.result || r.error || '(nessun output)') + '\n';
+    term.scrollTop = term.scrollHeight;
+  });
+}
+
+function quickCmd(cmd) {
+  document.getElementById('shell-cmd').value = cmd;
+  doShell();
+}
+
+function clearTerminal() {
+  document.getElementById('terminal-output').textContent = 'Terminale pulito.\n';
+}
+
+// ── POWER / SYSTEM ─────────────────────────────────────────────────────────
+function confirmAction(title, msg, action) {
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-msg').textContent = msg;
+  CONFIRM_ACTION = action;
+  document.getElementById('confirm-overlay').classList.add('show');
+}
+function closeConfirm() {
+  document.getElementById('confirm-overlay').classList.remove('show');
+  CONFIRM_ACTION = null;
+}
+function executeConfirmed() {
+  closeConfirm();
+  if (CONFIRM_ACTION === 'shutdown') {
+    apiPost('/shutdown', {}).then(r => toast(r.result, 'ok'));
+  } else if (CONFIRM_ACTION === 'restart') {
+    apiPost('/restart', {}).then(r => toast(r.result, 'ok'));
+  }
+}
+
+function genNewCode() {
+  fetch(SERVER + '/generate_code', { method: 'POST' })
+    .then(r => r.json())
+    .then(data => {
+      toast(`Nuovo codice: ${data.code}`, 'ok');
+      document.getElementById('current-code-display').textContent = data.code;
+    });
+}
+</script>
+</body>
+</html>
