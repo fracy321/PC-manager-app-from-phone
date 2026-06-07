@@ -78,8 +78,6 @@ Vedrai qualcosa come:
 
 ## ⚠️ NOTE DI SICUREZZA
 
-- Usa **solo su reti di fiducia** (casa tua, ufficio)
-- Non esporre la porta 8765 su internet
 - Il codice protegge da accessi non autorizzati sulla stessa rete
 - Lo shell remoto esegue comandi con i tuoi permessi utente
 
